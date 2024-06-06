@@ -1,6 +1,8 @@
 <template>
-  <div class="flex-1 flex-col items-center">
-    <VMap style="height: 256px; width: 256px" :center="[-20,-50]" :zoom="3" >
+  <div class="items-center flex items-center justify-center">
+    <VMap style="height: 256px; width: 256px"
+      :center="[markers[0].lat, markers[0].lng]"
+      :zoom="15" >
       <VMapOsmTileLayer />
       <VMapZoomControl />
       <VMapAttributionControl />
