@@ -1,14 +1,20 @@
 <template>
   <div class="items-center flex items-center justify-center">
     <VMap style="height: 256px; width: 256px"
-      :center="[markers[0].lat, markers[0].lng]"
+      :center="[markers?.at(0)?.lat ?? 0, markers?.at(0)?.lng ?? 0]"
       :zoom="15" >
       <VMapOsmTileLayer />
       <VMapZoomControl />
       <VMapAttributionControl />
-      <VMapMarker v-for="marker in markers" :key="marker.date" :latlng="[marker.lat, marker.lng]">
-        <VMapDefaultIcon />
-      </VMapMarker>
+      <template
+          v-for="marker in markers"
+          :key="marker.date">
+        <VMapMarker
+          :latlng="[marker.lat, marker.lng]"
+          :icon-size="[32, 42]">
+          <VMapDefaultIcon/>
+        </VMapMarker>
+      </template>
     </VMap>
   </div>
 </template>
