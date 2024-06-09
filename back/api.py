@@ -4,6 +4,7 @@ import redis
 import jwt
 from hashlib import sha256
 import time
+import json
 
 app = Flask(__name__)
 app.config['REDIS_HOST'] = environ['DB_HOST']
@@ -23,8 +24,7 @@ def create_user_token(username):
     return jwt.encode({
         'aud': f'urn:{username}',
         'exp': int(time.time()) + DEFAULT_EXPIRATION_MINUTES * 60,
-    },  environ['JWT_SECRET'],
-        algorithms=['HS256'])
+    },  environ['JWT_SECRET'])
 
 
 STATIC_SALT = environ['SALT']
@@ -34,6 +34,13 @@ def calc_rehashed_password(hashed_password, dynamic_salt_username):
     return sha256(
         f'{hashed_password}:{dynamic_salt_username}:{STATIC_SALT}'.encode()
     ).hexdigest()
+
+
+def create_default_coordinates(username):
+    with open('positions.json', 'r') as f:
+        positions = json.load(f)
+        redis_client.set(
+            f'user-coordinates/{username}', json.dumps(positions['data']))
 
 
 @app.route("/users", methods=["POST"])
@@ -52,11 +59,44 @@ def post_user_registration():
     existent_user = redis_client.get(user_path)
 
     if not (existent_user is None):
-        return 'could not handle request', 500
+        return '', 500
 
     redis_client.set(user_path, jsonify(user).get_data(as_text=True))
 
+    try:
+        create_default_coordinates(username)
+    except (FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            IOError) as _:
+        redis_client.delete(user_path)
+        return 'Internal Server Error', 501
+
     return create_user_token(username), 201
+
+
+@app.route("/login", methods=["GET"])
+def post_user_login():
+    login_data = request.json
+    username = login_data.get('username')
+    user_path = f'users/{username}'
+
+    existent_user = redis_client.get(user_path)
+
+    if not (existent_user is None):
+        return '', 401
+
+    redis_user = redis_client.get(user_path)
+
+    if redis_user is None:
+        return '', 401
+
+    if calc_rehashed_password(
+            login_data.get('hashed_password'),
+            username) == redis_user['rehashed_password']:
+        return '', 401
+
+    return create_user_token(username), 202
 
 
 def is_auth_user(token, username):
@@ -69,16 +109,17 @@ def is_auth_user(token, username):
 
 @ app.route("/user-coordinates", methods=["GET"])
 def getUserCoordinates():
-    user_id = request.args.get('userId')
+    username = request.args.get('username')
     try:
-        is_auth_user(request.headers.get('jwt'),
+        is_auth_user(request.headers.get('jwt').encode(),
                      request.headers.get('username'))
 
         redis_user_coordinates = redis_client.get(
-            f'user-coordinates/{user_id}')
+            f'user-coordinates/{username}')
 
         if redis_user_coordinates is None:
             return '', 404
+
         return jsonify(redis_user_coordinates), 200
     except (jwt.InvalidAudienceError, jwt.ExpiredSignatureError) as _:
         return '', 401
