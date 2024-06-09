@@ -4,6 +4,7 @@ from os import environ
 import redis
 import jwt
 from hashlib import sha256
+import datetime
 import time
 import json
 
@@ -17,10 +18,10 @@ redis_client = redis.Redis(
     port=app.config['REDIS_PORT'],
     password=app.config['REDIS_PASSWORD'],
     decode_responses=True)
-
 DEFAULT_EXPIRATION_MINUTES = 15
 
 
+# função básica de autenticação, decodifica com checks de username alegado e expiração
 def decode_jwt_token(token, username):
     return jwt.decode(token,
                       environ['JWT_SECRET'],
@@ -29,6 +30,7 @@ def decode_jwt_token(token, username):
                       options={'require': ['exp', 'aud']})
 
 
+# decorator que verifica em requests que exigem jwt token do usuário
 def jwt_token_required(a_route):
     @wraps(a_route)
     def decorator(*args, **kwargs):
@@ -66,8 +68,9 @@ def calc_rehashed_password(hashed_password, dynamic_salt_username):
 def create_default_coordinates(username):
     with open('positions.json', 'r') as f:
         positions = json.load(f)
-        redis_client.set(
-            f'user-coordinates/{username}', json.dumps(positions['data']))
+        positions = get_valid_user_coordinates(positions['data'])
+    redis_client.set(
+        f'user-coordinates/{username}', json.dumps(positions))
 
 
 @app.route(f'/users', methods=["POST"])
@@ -116,17 +119,18 @@ def get_user_login():
 
     if calc_rehashed_password(
             request.args.get('hashed_password'),
-            username) == redis_user['rehashed_password']:
+            username) != redis_user['rehashed_password']:
         return '', 401
 
     return create_user_token(username), 202
 
 
-@app.route(f'/user-coordinates', methods=["GET"])
+@app.route(f'/user-coordinates/<username>', methods=["GET"])
 @jwt_token_required
-def getUserCoordinates():
-    username = request.args.get('username')
-
+def get_user_coordinate(username: str):
+    if username != request.headers['username']:
+        return '', 401
+    username = str(username)
     redis_user_coordinates = redis_client.get(
         f'user-coordinates/{username}')
 
@@ -136,6 +140,57 @@ def getUserCoordinates():
     redis_user_coordinates = json.loads(redis_user_coordinates)
 
     return jsonify(redis_user_coordinates), 200
+
+
+def get_valid_user_coordinate(user_coordinate):
+    a_valid_user_coordinate = {}
+    a_valid_user_coordinate['date_time'] = datetime.datetime.fromisoformat(
+        user_coordinate['date_time']).isoformat()
+    a_valid_user_coordinate['latitude'] = float(user_coordinate['latitude'])
+    a_valid_user_coordinate['longitude'] = float(user_coordinate['longitude'])
+    return a_valid_user_coordinate
+
+
+def get_valid_user_coordinates(user_coordinates_body: list) -> list:
+    valid_user_coordinates = []
+    for user_coordinate in user_coordinates_body:
+        valid_user_coordinates.append(
+            get_valid_user_coordinate(user_coordinate))
+    return valid_user_coordinates
+
+
+@app.route(f'/user-coordinates/<username>', methods=["POST"])
+@jwt_token_required
+def post_user_coordinates(username: str):
+    if username != request.headers['username']:
+        return '', 401
+    user_coordinates = get_valid_user_coordinates(request.json)
+
+    redis_client.set(
+        f'user-coordinates/{username}', json.dumps(user_coordinates))
+
+    return '', 201
+
+
+@app.route(f'/user-coordinates/<username>', methods=["PUT"])
+@jwt_token_required
+def put_user_coordinate(username: str):
+    if username != request.headers['username']:
+        return '', 401
+    user_coordinate = get_valid_user_coordinate(request.json)
+
+    user_coordinates = redis_client.get(
+        f'user-coordinates/{username}')
+
+    user_coordinates = [] if user_coordinates is None else json.loads(
+        user_coordinates)
+
+    user_coordinates.append(user_coordinate)
+
+    redis_client.set(
+        f'user-coordinates/{username}', json.dumps(user_coordinates))
+
+    return '', 201
 
 
 if __name__ == '__main__':
