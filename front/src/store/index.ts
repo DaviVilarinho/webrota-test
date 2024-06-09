@@ -11,10 +11,13 @@ export const SET_USER_MAP_COORDINATES = "SET_USER_MAP_COORDINATES";
 export const SET_TOKEN = "SET_TOKEN";
 export const SET_USERNAME = "SET_USERNAME";
 
+export const TOGGLE_AUTH_MODAL = "TOGGLE_AUTH_MODAL";
+
 interface State {
   userCoordinates: UserCoordinates[];
   username?: string;
   token?: string;
+  hasAuthModal: boolean;
 }
 
 const assertHadAuth = (token?: string, username?: string) => {
@@ -26,6 +29,7 @@ const assertHadAuth = (token?: string, username?: string) => {
 export default createStore({
   state: {
     userCoordinates: Array<UserCoordinates>(),
+    hasAuthModal: false,
     username: undefined,
     token: undefined,
   } as State,
@@ -42,6 +46,9 @@ export default createStore({
     },
     [SET_USERNAME]: (state: State, payload: string) => {
       state.username = payload;
+    },
+    [TOGGLE_AUTH_MODAL]: (state: State) => {
+      state.hasAuthModal = !state.hasAuthModal;
     },
   },
   actions: {

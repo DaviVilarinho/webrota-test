@@ -1,11 +1,12 @@
+<!-- Já possuía um código de autenticação, reaproveitei ele-->
 <template>
   <div
-    class="fixed z-10 inset-0 overflow-y-auto"
-    :class="{ hidden: hidden}"
+    :class="{ fixed: true, 'z-10': true, 'overflow-y-auto': true, hidden: !store.state.hasAuthModal, 'pl-96': true }"
     id="modal"
   >
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 transition-opacity">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block
+      sm:p-0">
+      <div class="fixed inset-0 transition-opacity" @click="store.commit(TOGGLE_AUTH_MODAL)">
         <div class="absolute inset-0 bg-gray-800 opacity-75" />
       </div>
 
@@ -20,18 +21,18 @@
           <!--Title-->
           <div class="flex justify-between items-center pb-4">
             <p class="text-2xl font-bold">
-              Your Account
+              Entrar/Registrar
             </p>
             <!-- Modal Close Button -->
-            <div
+            <span
               class="modal-close cursor-pointer z-50"
-              @click.prevent="toggleAuthModal"
+              @click.prevent="store.commit(TOGGLE_AUTH_MODAL)"
             >
-              <i class="fas fa-times" />
-            </div>
+              &nbsp;&nbsp;&nbsp;X&nbsp;&nbsp;&nbsp;
+            </span>
           </div>
 
-          <register-form v-if="tab === 'register'" />
+          <register-form />
         </div>
       </div>
     </div>
@@ -39,14 +40,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, emit } from 'vue';
-import RegisterForm from './RegisterForm.vue';
+import RegisterForm from '@/components/RegisterForm.vue';
+import { useStore } from 'vuex';
+import { TOGGLE_AUTH_MODAL } from '@/store/index';
 
-defineEmits(['toggleAuthModal']);
-
-const toggleAuthModal = () => emit('toggleAuthModal');
-
-const props = defineProps({
-  hidden: Boolean,
-});
+const store = useStore();
 </script>

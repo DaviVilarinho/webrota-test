@@ -1,4 +1,5 @@
 <template>
+  <map-auth/>
   <nav>
     <router-link to="/">Home</router-link>
     |
@@ -10,25 +11,20 @@
     <span
       v-else
       class="font-bold text-blue-500 active:text-blue-300"
-      @click.prevent="toggleAuthModal"
-      @toggle-auth-modal="toggleAuthModal"
+      @click.prevent="store.commit(TOGGLE_AUTH_MODAL)"
     >Entrar/Cadastrar</span>
   </nav>
   <router-view/>
-  <map-auth :hidden="!hasAuthModal"/>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { useStore } from 'vuex';
-import { mapAuth } from '@/components/MapAuth.vue';
+import MapAuth from '@/components/MapAuth.vue';
+import { TOGGLE_AUTH_MODAL } from '@/store';
 
 const store = useStore();
 const hasAuth = computed(() => store.state.token !== undefined);
-const hasAuthModal = ref(false);
-const toggleAuthModal = () => {
-  hasAuthModal.value = !hasAuthModal.value;
-};
 </script>
 
 <style>

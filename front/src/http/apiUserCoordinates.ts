@@ -26,6 +26,7 @@ export const getUserCoordinates = async (username: string, token: string) => {
 };
 
 export const login = async (loginForm: LoginForm) => {
+  console.log(loginForm);
   const response = await fetch(
     `${BASE_API}/login?hashed_password=${loginForm.hashedPassword}&username=${loginForm.username}`,
   );
@@ -38,6 +39,7 @@ export const login = async (loginForm: LoginForm) => {
 };
 
 export const register = async (registerForm: LoginForm) => {
+  console.log(registerForm);
   const response = await fetch(`${BASE_API}/users`, {
     method: "POST",
     body: JSON.stringify(registerForm),

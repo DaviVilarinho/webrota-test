@@ -9,11 +9,10 @@
   <vee-form
     :validation-schema="schema"
     @submit="register"
-    :initial-values="userData"
   >
     <!-- username -->
     <div class="mb-3">
-      <label class="inline-block mb-2">username</label>
+      <label class="inline-block mb-2">Nome de Usuário</label>
       <vee-field
         type="text"
         name="username"
@@ -26,7 +25,7 @@
       />
     </div>
     <div class="mb-3">
-      <label class="inline-block mb-2">Password</label>
+      <label class="inline-block mb-2">Senha</label>
       <vee-field
         name="password"
         :bails="false"
@@ -48,35 +47,50 @@
         </div>
       </vee-field>
     </div>
-    <button
-      type="submit"
-      :disabled="regInSubmission"
-      class="block w-full bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
-    >
-      Submit
-    </button>
+    <div class="flex flex-row flex-shrink justify-between flex-grow">
+      <button
+        type="submit"
+        :disabled="regInSubmission"
+        class="block bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
+        @click.prevent="register"
+      >
+        Registrar
+      </button>
+      <button
+        type="submit"
+        :disabled="regInSubmission"
+        class="block bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
+        @click.prevent="login"
+      >
+        Login
+      </button>
+    </div>
   </vee-form>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { DISPATCH_REGISTER } from "@/store";
+import { DISPATCH_REGISTER, DISPATCH_LOGIN } from "@/store";
 import { useStore } from 'vuex';
+import type { LoginForm } from '@/interfaces/LoginForm';
+import { sha256 } from 'js-sha256';
 
 const store = useStore();
 
-const CREATING_MESSAGE = 'Your account is being created';
+const CREATING_MESSAGE = 'Sua conta está sendo criada...';
+const TRY_LOGIN_MESSAGE = 'Logando...';
 const BG_CREATING = 'bg-blue-500';
 
-const CREATED_MESSAGE = 'Success! Your account has been created.';
+const CREATED_MESSAGE = 'Sua conta foi criada...';
+const OK_LOGIN_MESSAGE = 'Logado!';
 const BG_CREATED = 'bg-green-500';
 
-const NOT_CREATED_MESSAGE = 'An error occured creating your user... Try submitting again!';
+const NOT_CREATED_MESSAGE = 'Não foi possível se registrar, tente novamente.';
+const NOK_LOGIN_MESSAGE = 'Não foi possível logar, tente novamente.';
 const BG_NOT_CREATED = 'bg-red-500';
 const schema = ref({
   username: 'required|min:3|max:100|alpha_spaces',
   password: 'required|min:6|max:100',
-  confirm_password: 'required|passwords_match:@password',
 });
 const regInSubmission = ref(false);
 const regShowAlert = ref(false);
@@ -90,7 +104,10 @@ const register = async (registrationForm) => {
   regAlertMessage.value = CREATING_MESSAGE;
 
   try {
-    await store.dispatch(DISPATCH_REGISTER, registrationForm);
+    await store.dispatch(DISPATCH_REGISTER, {
+      username: registrationForm.username,
+      hashedPassword: sha256(registrationForm.username),
+    } as LoginForm);
   } catch (error) {
     regInSubmission.value = false;
     regAlertVariant.value = BG_NOT_CREATED;
@@ -100,6 +117,30 @@ const register = async (registrationForm) => {
 
   regAlertVariant.value = BG_CREATED;
   regAlertMessage.value = CREATED_MESSAGE;
+
+  window.location.reload();
+};
+
+const login = async (loginForm) => {
+  regShowAlert.value = true;
+  regInSubmission.value = true;
+  regAlertVariant.value = BG_CREATING;
+  regAlertMessage.value = TRY_LOGIN_MESSAGE;
+
+  try {
+    await store.dispatch(DISPATCH_LOGIN, {
+      username: loginForm.username,
+      hashedPassword: sha256(loginForm.username),
+    } as LoginForm);
+  } catch (error) {
+    regInSubmission.value = false;
+    regAlertVariant.value = BG_NOT_CREATED;
+    regAlertMessage.value = NOK_LOGIN_MESSAGE;
+    return;
+  }
+
+  regAlertVariant.value = BG_CREATED;
+  regAlertMessage.value = OK_LOGIN_MESSAGE;
 
   window.location.reload();
 };

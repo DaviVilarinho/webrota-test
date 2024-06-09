@@ -1,1 +1,1 @@
-export const BASE_API = "0.0.0.0:5000";
+export const BASE_API = "http://localhost:5000";
