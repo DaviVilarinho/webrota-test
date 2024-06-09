@@ -1,15 +1,51 @@
-import 'dotenv';
-
-dotenv.config();
+import { LoginForm } from "@/interfaces/LoginForm";
+import type UserCoordinates from "@/interfaces/UserCoordinates";
+import { BASE_API } from "@/http/baseApi";
 
 interface ApiUserCoordinates {
-	"date_time": "2019-02-12T10:57:36+00:00",
-	"latitude": "-18.92406700",
-	"longitude": "-48.28214200"
-
+  "date_time": string;
+  "latitude": number;
+  "longitude": number;
 }
 
-const getUserCoordinates = async () => {
-  const response = await fetch(`${process.env.BASE_API}/user-coordinates`);
-  return await response.json() as Array<UserCoo
-}
+export const getUserCoordinates = async (username: string, token: string) => {
+  const response = await fetch(`${BASE_API}/user-coordinates/${username}`, {
+    headers: {
+      "x-access-token": token,
+      username,
+    },
+  });
+
+  return (await response.json()).map((
+    apiUserCoordinate: ApiUserCoordinates,
+  ) => ({
+    date_time: apiUserCoordinate.date_time,
+    lat: apiUserCoordinate.latitude,
+    lng: apiUserCoordinate.longitude,
+  })) as Array<UserCoordinates>;
+};
+
+export const login = async (loginForm: LoginForm) => {
+  const response = await fetch(
+    `${BASE_API}/login?hashed_password=${loginForm.hashedPassword}&username=${loginForm.username}`,
+  );
+
+  if (response.status > 300) {
+    throw new Error("Auth error");
+  }
+
+  return response.text();
+};
+
+export const register = async (registerForm: LoginForm) => {
+  const response = await fetch(`${BASE_API}/users`, {
+    method: "POST",
+    body: JSON.stringify(registerForm),
+  });
+
+  if (response.status > 300) {
+    throw new Error("Auth error");
+  }
+
+  return response.text();
+};

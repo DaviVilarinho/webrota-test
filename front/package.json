@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "core-js": "^3.8.3",
-    "dotenv": "^16.4.5",
     "leaflet": "^1.9.4",
+    "vee-validate": "4.12.6",
     "vue": "^3.2.13",
     "vue-map-ui": "^0.0.18",
     "vue-router": "^4.0.3",
@@ -50,7 +50,12 @@
       "ecmaVersion": 2020
     },
     "rules": {
-      "@typescript-eslint/no-extra-semi": 0
+      "@typescript-eslint/no-extra-semi": 0,
+      "import/prefer-default-export": 0,
+      "quotes": 0,
+      "vuejs-accessibility/click-events-have-key-events": 0,
+      "vuejs-accessibility/label-has-for": 0,
+      "max-len": 0
     }
   },
   "browserslist": [
