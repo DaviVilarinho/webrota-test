@@ -5,8 +5,7 @@ services:
       - '5000:5000'
     environment:
       DB_PASSWORD: "${DB_PASSWORD}"
-      DB_HOST: 0.0.0.0
-      DB_NAME: "${DB_NAME}"
+      DB_HOST: db
       DB_PORT: "${DB_PORT}"
       SALT: "${SALT}"
       JWT_SECRET: "${JWT_SECRET}"

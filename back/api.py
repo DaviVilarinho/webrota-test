@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from functools import wraps
 from os import environ
 import redis
 import jwt
@@ -18,6 +19,32 @@ redis_client = redis.Redis(
     decode_responses=True)
 
 DEFAULT_EXPIRATION_MINUTES = 15
+
+
+def decode_jwt_token(token, username):
+    return jwt.decode(token,
+                      environ['JWT_SECRET'],
+                      audience=f'urn:{username}',
+                      algorithms=['HS256'],
+                      options={'require': ['exp', 'aud']})
+
+
+def jwt_token_required(a_route):
+    @wraps(a_route)
+    def decorator(*args, **kwargs):
+        token = None
+        username = None
+        if 'x-access-token' in request.headers and 'username' in request.headers:
+            token = request.headers['x-access-token']
+            username = request.headers['username']
+        if (not token) or (not username):
+            return "Missing either token or username", 401
+        try:
+            decode_jwt_token(token, username)
+        except (jwt.InvalidAudienceError, jwt.ExpiredSignatureError) as _:
+            return 'Invalid token', 401
+        return a_route(*args, **kwargs)
+    return decorator
 
 
 def create_user_token(username):
@@ -43,7 +70,7 @@ def create_default_coordinates(username):
             f'user-coordinates/{username}', json.dumps(positions['data']))
 
 
-@app.route("/users", methods=["POST"])
+@app.route(f'/users', methods=["POST"])
 def post_user_registration():
     registration_data = request.json
     username = registration_data.get('username')
@@ -61,7 +88,7 @@ def post_user_registration():
     if not (existent_user is None):
         return '', 500
 
-    redis_client.set(user_path, jsonify(user).get_data(as_text=True))
+    redis_client.set(user_path, json.dumps(user))
 
     try:
         create_default_coordinates(username)
@@ -75,136 +102,40 @@ def post_user_registration():
     return create_user_token(username), 201
 
 
-@app.route("/login", methods=["GET"])
-def post_user_login():
-    login_data = request.json
-    username = login_data.get('username')
+@app.route(f'/login', methods=["GET"])
+def get_user_login():
+    username = request.args.get('username')
     user_path = f'users/{username}'
-
-    existent_user = redis_client.get(user_path)
-
-    if not (existent_user is None):
-        return '', 401
 
     redis_user = redis_client.get(user_path)
 
     if redis_user is None:
         return '', 401
 
+    redis_user = json.loads(redis_user)
+
     if calc_rehashed_password(
-            login_data.get('hashed_password'),
+            request.args.get('hashed_password'),
             username) == redis_user['rehashed_password']:
         return '', 401
 
     return create_user_token(username), 202
 
 
-def is_auth_user(token, username):
-    return jwt.decode(token,
-                      environ['JWT_SECRET'],
-                      audience=f'urn:{username}',
-                      algorithms=['HS256'],
-                      options={'require': ['exp', 'aud']})
-
-
-@ app.route("/user-coordinates", methods=["GET"])
+@app.route(f'/user-coordinates', methods=["GET"])
+@jwt_token_required
 def getUserCoordinates():
     username = request.args.get('username')
-    try:
-        is_auth_user(request.headers.get('jwt').encode(),
-                     request.headers.get('username'))
 
-        redis_user_coordinates = redis_client.get(
-            f'user-coordinates/{username}')
+    redis_user_coordinates = redis_client.get(
+        f'user-coordinates/{username}')
 
-        if redis_user_coordinates is None:
-            return '', 404
+    if redis_user_coordinates is None:
+        return '', 404
 
-        return jsonify(redis_user_coordinates), 200
-    except (jwt.InvalidAudienceError, jwt.ExpiredSignatureError) as _:
-        return '', 401
+    redis_user_coordinates = json.loads(redis_user_coordinates)
 
-    return
-    return [{
-        "date_time": "2019-02-12T10:57:36+00:00",
-        "latitude": "-18.92406700",
-        "longitude": "-48.28214200"
-    },
-        {
-        "date_time": "2019-02-12T10:57:06+00:00",
-        "latitude": "-18.92376500",
-        "longitude": "-48.28210800"
-    },
-        {
-        "date_time": "2019-02-12T10:56:36+00:00",
-        "latitude": "-18.92213500",
-        "longitude": "-48.28205200"
-    },
-        {
-        "date_time": "2019-02-12T10:56:06+00:00",
-        "latitude": "-18.92082200",
-        "longitude": "-48.28132800"
-    },
-        {
-        "date_time": "2019-02-12T10:55:36+00:00",
-        "latitude": "-18.91951300",
-        "longitude": "-48.28033200"
-    },
-        {
-        "date_time": "2019-02-12T10:55:06+00:00",
-        "latitude": "-18.91966300",
-        "longitude": "-48.27849800"
-    },
-        {
-        "date_time": "2019-02-12T10:54:36+00:00",
-        "latitude": "-18.92081800",
-        "longitude": "-48.27682200"
-    },
-        {
-        "date_time": "2019-02-12T10:54:06+00:00",
-        "latitude": "-18.92195000",
-        "longitude": "-48.27513200"
-    },
-        {
-        "date_time": "2019-02-12T10:53:36+00:00",
-        "latitude": "-18.92298100",
-        "longitude": "-48.27350800"
-    },
-        {
-        "date_time": "2019-02-12T10:53:06+00:00",
-        "latitude": "-18.92313700",
-        "longitude": "-48.27337200"
-    },
-        {
-        "date_time": "2019-02-12T10:52:36+00:00",
-        "latitude": "-18.92372200",
-        "longitude": "-48.27213800"
-    },
-        {
-        "date_time": "2019-02-12T10:52:06+00:00",
-        "latitude": "-18.92295000",
-        "longitude": "-48.27078200"
-    },
-        {
-        "date_time": "2019-02-12T10:51:36+00:00",
-        "latitude": "-18.91990800",
-        "longitude": "-48.26785500"
-    },
-        {
-        "date_time": "2019-02-12T10:51:06+00:00",
-        "latitude": "-18.91765300",
-        "longitude": "-48.26528000"
-    },
-        {
-        "date_time": "2019-02-12T10:50:36+00:00",
-        "latitude": "-18.91815100",
-        "longitude": "-48.26453900"
-    },
-        {
-        "date_time": "2019-02-12T10:50:06+00:00",
-        "latitude": "-18.91814500",
-        "longitude": "-48.26453700"
-    }], 200
+    return jsonify(redis_user_coordinates), 200
 
 
 if __name__ == '__main__':
