@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from functools import wraps
 from os import environ
 import redis
@@ -9,6 +10,7 @@ import time
 import json
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['REDIS_HOST'] = environ['DB_HOST']
 app.config['REDIS_PORT'] = environ['DB_PORT']
 app.config['REDIS_PASSWORD'] = environ['DB_PASSWORD']
@@ -113,7 +115,7 @@ def get_user_login():
     redis_user = redis_client.get(user_path)
 
     if redis_user is None:
-        return '', 401
+        return 'No user', 401
 
     redis_user = json.loads(redis_user)
 

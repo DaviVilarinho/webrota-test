@@ -11,6 +11,7 @@ interface ApiUserCoordinates {
 export const getUserCoordinates = async (username: string, token: string) => {
   const response = await fetch(`${BASE_API}/user-coordinates/${username}`, {
     headers: {
+      "Content-Type": "application/json",
       "x-access-token": token,
       username,
     },
@@ -26,7 +27,6 @@ export const getUserCoordinates = async (username: string, token: string) => {
 };
 
 export const login = async (loginForm: LoginForm) => {
-  console.log(loginForm);
   const response = await fetch(
     `${BASE_API}/login?hashed_password=${loginForm.hashedPassword}&username=${loginForm.username}`,
   );
@@ -39,9 +39,11 @@ export const login = async (loginForm: LoginForm) => {
 };
 
 export const register = async (registerForm: LoginForm) => {
-  console.log(registerForm);
   const response = await fetch(`${BASE_API}/users`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(registerForm),
   });
 

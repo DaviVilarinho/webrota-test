@@ -52,15 +52,17 @@ export default createStore({
     },
   },
   actions: {
-    [DISPATCH_LOGIN]: async ({ commit }, payload: LoginForm) => {
+    [DISPATCH_LOGIN]: async ({ commit, dispatch }, payload: LoginForm) => {
       const token = await login(payload);
       commit(SET_TOKEN, token);
       commit(SET_USERNAME, payload.username);
+      await dispatch(DISPATCH_GET_USER_MAP_COORDINATES);
     },
-    [DISPATCH_REGISTER]: async ({ commit }, payload: LoginForm) => {
+    [DISPATCH_REGISTER]: async ({ commit, dispatch }, payload: LoginForm) => {
       const token = await register(payload);
       commit(SET_TOKEN, token);
       commit(SET_USERNAME, payload.username);
+      await dispatch(DISPATCH_GET_USER_MAP_COORDINATES);
     },
     [DISPATCH_GET_USER_MAP_COORDINATES]: async ({ state, commit }) => {
       assertHadAuth(state.token, state.username);
