@@ -9,6 +9,10 @@ services:
       DB_PORT: "${DB_PORT}"
       SALT: "${SALT}"
       JWT_SECRET: "${JWT_SECRET}"
+  front: 
+    build: ./front
+    ports:
+      - '8080:8080'
   db:
     image: redis:7.2
     restart: always
