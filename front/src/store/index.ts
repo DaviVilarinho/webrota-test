@@ -1,5 +1,6 @@
 import { createStore } from "vuex";
 import type UserCoordinates from "@/interfaces/UserCoordinates";
+import { calculateTotalDistance } from "@/interfaces/UserCoordinates";
 import { getUserCoordinates, login, register } from "@/http/apiUserCoordinates";
 import { LoginForm } from "@/interfaces/LoginForm";
 
@@ -10,14 +11,17 @@ export const DISPATCH_REGISTER = "POST_REGISTER";
 export const SET_USER_MAP_COORDINATES = "SET_USER_MAP_COORDINATES";
 export const SET_TOKEN = "SET_TOKEN";
 export const SET_USERNAME = "SET_USERNAME";
+export const SET_DISTANCE = "SET_DISTANCE";
 
 export const TOGGLE_AUTH_MODAL = "TOGGLE_AUTH_MODAL";
+export const LOGOUT = "LOGOUT";
 
 interface State {
   userCoordinates: UserCoordinates[];
   username?: string;
   token?: string;
   hasAuthModal: boolean;
+  totalDistance: number;
 }
 
 const assertHadAuth = (token?: string, username?: string) => {
@@ -32,6 +36,7 @@ export default createStore({
     hasAuthModal: false,
     username: undefined,
     token: undefined,
+    totalDistance: 0,
   } as State,
   getters: {},
   mutations: {
@@ -49,6 +54,13 @@ export default createStore({
     },
     [TOGGLE_AUTH_MODAL]: (state: State) => {
       state.hasAuthModal = !state.hasAuthModal;
+    },
+    [LOGOUT]: (state: State) => {
+      state.token = undefined;
+      state.username = undefined;
+    },
+    [SET_DISTANCE]: (state: State) => {
+      state.totalDistance = calculateTotalDistance(state.userCoordinates);
     },
   },
   actions: {
@@ -72,6 +84,7 @@ export default createStore({
       );
 
       commit(SET_USER_MAP_COORDINATES, responsePoints);
+      commit(SET_DISTANCE, responsePoints);
     },
   },
   modules: {},

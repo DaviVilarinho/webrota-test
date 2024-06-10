@@ -57,7 +57,8 @@
       "quotes": 0,
       "vuejs-accessibility/click-events-have-key-events": 0,
       "vuejs-accessibility/label-has-for": 0,
-      "max-len": 0
+      "max-len": 0,
+      "operator-linebreak": 0
     }
   },
   "browserslist": [

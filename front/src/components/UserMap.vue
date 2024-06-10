@@ -15,6 +15,9 @@
     <p v-else-if="hasToken" class="text-slate-500">
       Não há marcadores ainda, adicione pontos logo abaixo
     </p>
+    <p v-if="hasMarkers">
+      Que legal! Você percorreu <b class="text-2xl">{{ markersDistance.toFixed(0) }}m</b>!
+    </p>
   </div>
 </template>
 
@@ -25,11 +28,14 @@ import {
 } from 'vue-map-ui';
 import { useStore } from 'vuex';
 import { DISPATCH_GET_USER_MAP_COORDINATES } from '@/store';
+import type UserCoordinates from "@/interfaces/UserCoordinates";
 
 const store = useStore();
 const markers = computed(() => store.state.userCoordinates);
 const hasMarkers = computed(() => store.state.userCoordinates.length > 0);
 const hasToken = computed(() => store.state.token !== undefined);
+
+const markersDistance = computed(() => store.state.totalDistance);
 </script>
 
 <style>
