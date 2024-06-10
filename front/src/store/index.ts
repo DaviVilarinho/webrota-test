@@ -57,6 +57,7 @@ export default createStore({
     },
     [LOGOUT]: (state: State) => {
       state.token = undefined;
+      state.userCoordinates = [];
       state.username = undefined;
     },
     [SET_DISTANCE]: (state: State) => {

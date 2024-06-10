@@ -62,9 +62,12 @@ STATIC_SALT = environ['SALT']
 
 
 def calc_rehashed_password(hashed_password, dynamic_salt_username):
-    return sha256(
-        f'{hashed_password}:{dynamic_salt_username}:{STATIC_SALT}'.encode()
-    ).hexdigest()
+    shahash = sha256()
+    shahash.update(
+        bytes(f'{hashed_password}:{dynamic_salt_username}:{
+              STATIC_SALT}', 'utf-8')
+    )
+    return shahash.hexdigest()
 
 
 def create_default_coordinates(username):

@@ -19,12 +19,11 @@
   <div class="flex flex-row flex-shrink justify-between flex-grow">
     <button type="submit" :disabled="regInSubmission"
       class="block bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
-      @click.prevent="register(validate)">
+      @click.prevent="register">
       Registrar
     </button>
     <button type="submit" :disabled="regInSubmission"
-      class="block bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
-      @click.prevent="login(validate)">
+      class="block bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700" @click.prevent="login">
       Login
     </button>
   </div>
@@ -95,6 +94,9 @@ const register = async () => {
   regAlertVariant.value = BG_CREATED;
   regAlertMessage.value = CREATED_MESSAGE;
 
+  setTimeout(() => { }, 1000);
+  regShowAlert.value = false;
+
   store.commit(TOGGLE_AUTH_MODAL);
 };
 
@@ -107,11 +109,8 @@ const login = async () => {
   try {
     const loginForm = {
       username: formUsername.value,
-      hashedPassword: sha256(formPassword),
+      hashedPassword: sha256(formPassword.value),
     } as LoginForm;
-    if (!validateForm(loginForm)) {
-      throw new Error('Invalid login');
-    }
     await store.dispatch(DISPATCH_LOGIN, loginForm);
   } catch (error) {
     regInSubmission.value = false;
@@ -122,6 +121,9 @@ const login = async () => {
 
   regAlertVariant.value = BG_CREATED;
   regAlertMessage.value = OK_LOGIN_MESSAGE;
+
+  setTimeout(() => { }, 1000);
+  regShowAlert.value = false;
 
   store.commit(TOGGLE_AUTH_MODAL);
 };

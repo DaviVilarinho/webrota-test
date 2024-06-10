@@ -44,7 +44,10 @@ export const register = async (registerForm: LoginForm) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(registerForm),
+    body: JSON.stringify({
+      hashed_password: registerForm.hashedPassword,
+      username: registerForm.username,
+    }),
   });
 
   if (response.status > 300) {

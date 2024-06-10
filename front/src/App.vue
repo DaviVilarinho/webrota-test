@@ -1,14 +1,16 @@
 <template>
-  <map-auth />
-  <nav>
-    <router-link to="/">Home</router-link>
-    |
-    <span v-if="hasAuth" class="font-bold text-blue-300 active:text-blue-200 opacity-50"
-      @click="store.commit(LOGOUT)">Sair</span>
-    <span v-else class="font-bold text-blue-500 active:text-blue-300"
-      @click.prevent="store.commit(TOGGLE_AUTH_MODAL)">Entrar/Cadastrar</span>
-  </nav>
-  <router-view />
+  <map-auth v-if="store.state.hasAuthModal" />
+  <template v-else>
+    <nav>
+      <router-link to="/">Home</router-link>
+      |
+      <span v-if="hasAuth" class="font-bold text-blue-300 active:text-blue-200 opacity-50"
+        @click="store.commit(LOGOUT)">Sair</span>
+      <span v-else class="font-bold text-blue-500 active:text-blue-300"
+        @click.prevent="store.commit(TOGGLE_AUTH_MODAL)">Entrar/Cadastrar</span>
+    </nav>
+    <router-view />
+  </template>
 </template>
 
 <script setup lang="ts">

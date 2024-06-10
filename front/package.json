@@ -58,7 +58,8 @@
       "vuejs-accessibility/click-events-have-key-events": 0,
       "vuejs-accessibility/label-has-for": 0,
       "max-len": 0,
-      "operator-linebreak": 0
+      "operator-linebreak": 0,
+      "@typescript-eslint/no-empty-function": 0
     }
   },
   "browserslist": [
