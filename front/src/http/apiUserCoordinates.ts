@@ -31,7 +31,7 @@ export const login = async (loginForm: LoginForm) => {
     `${BASE_API}/login?hashed_password=${loginForm.hashedPassword}&username=${loginForm.username}`,
   );
 
-  if (response.status > 300) {
+  if (response.status > 400) {
     throw new Error("Auth error");
   }
 
@@ -50,9 +50,37 @@ export const register = async (registerForm: LoginForm) => {
     }),
   });
 
-  if (response.status > 300) {
+  if (response.status > 400) {
     throw new Error("Auth error");
   }
 
   return response.text();
+};
+
+export interface PutUserCoordinatesForm {
+  "date_time": string;
+  latitude: number;
+  longitude: number;
+}
+
+export const putUserCoordinates = async (
+  username: string,
+  token: string,
+  putUserCoordinatesForm: PutUserCoordinatesForm,
+) => {
+  const response = await fetch(`${BASE_API}/user-coordinates/${username}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-access-token": token,
+      username,
+    },
+    body: JSON.stringify(putUserCoordinatesForm),
+  });
+
+  if (response.status > 400) {
+    throw new Error("Auth error");
+  }
+
+  return response.status === 201;
 };

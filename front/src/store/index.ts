@@ -1,7 +1,13 @@
 import { createStore } from "vuex";
 import type UserCoordinates from "@/interfaces/UserCoordinates";
 import { calculateTotalDistance } from "@/interfaces/UserCoordinates";
-import { getUserCoordinates, login, register } from "@/http/apiUserCoordinates";
+import {
+  getUserCoordinates,
+  login,
+  putUserCoordinates,
+  PutUserCoordinatesForm,
+  register,
+} from "@/http/apiUserCoordinates";
 import { LoginForm } from "@/interfaces/LoginForm";
 
 export const DISPATCH_GET_USER_MAP_COORDINATES = "GET_USER_MAP_COORDINATES";
@@ -15,6 +21,7 @@ export const SET_DISTANCE = "SET_DISTANCE";
 
 export const TOGGLE_AUTH_MODAL = "TOGGLE_AUTH_MODAL";
 export const LOGOUT = "LOGOUT";
+export const PUT_MARKER = "PUT_MARKER";
 
 interface State {
   userCoordinates: UserCoordinates[];
@@ -86,6 +93,21 @@ export default createStore({
 
       commit(SET_USER_MAP_COORDINATES, responsePoints);
       commit(SET_DISTANCE, responsePoints);
+    },
+    [PUT_MARKER]: async (
+      { state, dispatch },
+      payload: PutUserCoordinatesForm,
+    ) => {
+      assertHadAuth(state.token, state.username);
+      const putCoordinate = await putUserCoordinates(
+        state.username!,
+        state.token!,
+        payload,
+      );
+      if (!putCoordinate) {
+        throw new Error("Could not change coordinates");
+      }
+      await dispatch(DISPATCH_GET_USER_MAP_COORDINATES);
     },
   },
   modules: {},
